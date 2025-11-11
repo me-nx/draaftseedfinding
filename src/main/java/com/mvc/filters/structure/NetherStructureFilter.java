@@ -4,7 +4,6 @@ import com.mvc.Config;
 import com.seedfinding.mcbiome.biome.Biomes;
 import com.seedfinding.mcbiome.source.NetherBiomeSource;
 import com.seedfinding.mccore.rand.ChunkRand;
-import com.seedfinding.mccore.util.block.BlockDirection;
 import com.seedfinding.mccore.util.pos.CPos;
 import com.seedfinding.mcfeature.structure.BastionRemnant;
 import com.seedfinding.mcfeature.structure.Fortress;
@@ -20,7 +19,7 @@ public class NetherStructureFilter {
     }
 
     public boolean filterStructures() {
-        return hasFortress() && isSSV();
+        return hasBastion() && hasFortress() && isSSV();
     }
 
     private boolean hasBastion() {
@@ -30,7 +29,9 @@ public class NetherStructureFilter {
             for (int z = -1; z <= 0; z++) {
                 CPos bastionPos = bastion.getInRegion(structureSeed, x, z, chunkRand);
                 if (bastionPos != null && bastionPos.getMagnitude() <= Config.BASTION_DISTANCE) {
-                    return true;
+                    if (bastion.canSpawn(bastionPos, new NetherBiomeSource(Config.VERSION, structureSeed))) {
+                        return true;
+                    }
                 }
             }
         }
