@@ -3,11 +3,13 @@ package com.mvc.filters.structure;
 import com.mvc.Config;
 import com.seedfinding.mcbiome.source.EndBiomeSource;
 import com.seedfinding.mccore.rand.ChunkRand;
+import com.seedfinding.mccore.util.data.Pair;
 import com.seedfinding.mccore.util.math.DistanceMetric;
 import com.seedfinding.mccore.util.pos.BPos;
 import com.seedfinding.mccore.util.pos.CPos;
 import com.seedfinding.mccore.util.pos.RPos;
 import com.seedfinding.mcfeature.structure.EndCity;
+import com.seedfinding.mcfeature.structure.generator.Generator;
 import com.seedfinding.mcfeature.structure.generator.structure.EndCityGenerator;
 import com.seedfinding.mcterrain.terrain.EndTerrainGenerator;
 
@@ -60,6 +62,16 @@ public class EndStructureFilter {
             return false;
         }
 
-        return ecg.hasShip() && ecg.getLootPos().size() > 2;
+        for (Pair<Generator.ILootType, BPos> e : ecg.getChestsPos()) {
+            if (e.getFirst().equals(EndCityGenerator.LootType.SHIP_ELYTRA)) {
+                if (e.getSecond().toChunkPos().distanceTo(cityPos, DistanceMetric.EUCLIDEAN) > 9) {
+                    System.out.println(structureSeed + ": cut off ship found at /execute in minecraft:the_end run tp @s " + e.getSecond().getX() + " ~ " + e.getSecond().getZ());
+                    return false;
+                }
+            }
+        }
+
+        // ship room + 4 other chests
+        return ecg.hasShip() && ecg.getLootPos().size() >= 6;
     }
 }
