@@ -3,19 +3,16 @@ package com.mvc.filters.structure;
 import com.mvc.Config;
 import com.mvc.filters.LootTables;
 import com.seedfinding.mccore.rand.ChunkRand;
-import com.seedfinding.mccore.state.Dimension;
 import com.seedfinding.mccore.util.pos.CPos;
 import com.seedfinding.mcfeature.loot.LootContext;
 import com.seedfinding.mcfeature.loot.LootTable;
-import com.seedfinding.mcfeature.loot.MCLootTables;
 import com.seedfinding.mcfeature.loot.item.Item;
 import com.seedfinding.mcfeature.loot.item.ItemStack;
 import com.seedfinding.mcfeature.loot.item.Items;
 import com.seedfinding.mcfeature.structure.DesertPyramid;
+import com.seedfinding.mcfeature.structure.Monument;
 import com.seedfinding.mcfeature.structure.PillagerOutpost;
-import com.seedfinding.mcfeature.structure.RuinedPortal;
 import com.seedfinding.mcfeature.structure.Village;
-import com.seedfinding.mcfeature.structure.generator.structure.RuinedPortalGenerator;
 
 import java.util.List;
 
@@ -30,7 +27,7 @@ public class OverworldStructureFilter {
     }
 
     public boolean filterStructures() {
-        return hasVillage() && hasTemple() && hasTempleLoot();
+        return hasVillage() && hasTemple() && hasMonument() && hasOutpost() && hasTempleLoot();
     }
 
     private boolean hasVillage() {
@@ -45,6 +42,38 @@ public class OverworldStructureFilter {
         templePos = temple.getInRegion(structureSeed, 0, 0, chunkRand);
 
         return templePos.getMagnitude() <= Config.TEMPLE_DISTANCE;
+    }
+
+    private boolean hasMonument() {
+        Monument mm = new Monument(Config.VERSION);
+
+        for (int x = -2; x <= 1; x++) {
+            for (int z = -2; z <= 2; z++) {
+                CPos mmPos = mm.getInRegion(structureSeed, x, z, chunkRand);
+
+                if (mmPos.getMagnitude() <= Config.MONUMENT_DISTANCE) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasOutpost() {
+        PillagerOutpost po = new PillagerOutpost(Config.VERSION);
+
+        for (int x = -2; x <= 1; x++) {
+            for (int z = -2; z <= 2; z++) {
+                CPos poPos = po.getInRegion(structureSeed, x, z, chunkRand);
+
+                if (poPos != null && poPos.getMagnitude() <= Config.OUTPOST_DISTANCE) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private boolean hasTempleLoot() {
