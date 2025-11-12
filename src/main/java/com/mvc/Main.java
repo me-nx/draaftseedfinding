@@ -57,7 +57,7 @@ public class Main {
         Random random = new Random();
 
         while (seedMatches < Config.SEED_MATCHES) {
-            checkSeed(random.nextLong());
+            checkSeed(random.nextLong() % (1L << 48));
         }
     }
 
@@ -66,8 +66,8 @@ public class Main {
 
         if (matchedStructureSeed != null) {
             if (Config.DIMENSION.equals(Dimension.OVERWORLD)) {
-                for (long biomeSeed = 0; biomeSeed < 1L << 16; biomeSeed++) {
-                    long worldSeed = biomeSeed << 48 | matchedStructureSeed;
+                for (long biomeSeed = 0; biomeSeed < (1L << 16); biomeSeed++) {
+                    long worldSeed = (biomeSeed << 48) | matchedStructureSeed;
                     Long matchedWorldSeed = filterWorldSeed(worldSeed, matchedStructureSeed) ? worldSeed : null;
 
                     if (matchedWorldSeed != null) {
