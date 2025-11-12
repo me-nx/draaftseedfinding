@@ -6,6 +6,8 @@ import com.seedfinding.mcbiome.source.OverworldBiomeSource;
 import com.seedfinding.mccore.rand.ChunkRand;
 import com.seedfinding.mccore.util.pos.CPos;
 import com.seedfinding.mcfeature.structure.DesertPyramid;
+import com.seedfinding.mcfeature.structure.Monument;
+import com.seedfinding.mcfeature.structure.PillagerOutpost;
 import com.seedfinding.mcfeature.structure.Village;
 
 public class OverworldBiomeFilter {
@@ -19,7 +21,7 @@ public class OverworldBiomeFilter {
     }
 
     public boolean filterBiomes() {
-        return hasVillage() && hasTemple() && hasMidgameTemples(5);
+        return hasVillage() && hasTemple() && hasMonument() && hasOutpost() && hasMidgameTemples(5);
     }
 
     private boolean hasVillage() {
@@ -57,5 +59,37 @@ public class OverworldBiomeFilter {
         }
 
         return count >= minCount;
+    }
+
+    private boolean hasMonument() {
+        Monument mm = new Monument(Config.VERSION);
+
+        for (int x = -2; x <= 1; x++) {
+            for (int z = -2; z <= 2; z++) {
+                CPos mmPos = mm.getInRegion(structureSeed, x, z, chunkRand);
+
+                if (mm.canSpawn(mmPos.getX(), mmPos.getZ(), overworldBiomeSource)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasOutpost() {
+        PillagerOutpost po = new PillagerOutpost(Config.VERSION);
+
+        for (int x = -2; x <= 1; x++) {
+            for (int z = -2; z <= 2; z++) {
+                CPos poPos = po.getInRegion(structureSeed, x, z, chunkRand);
+
+                if (poPos != null && po.canSpawn(poPos.getX(), poPos.getZ(), overworldBiomeSource)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
