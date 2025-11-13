@@ -3,6 +3,7 @@ package com.mvc.filters.biome;
 import com.mvc.Config;
 
 import com.seedfinding.mcbiome.layer.BiomeLayer;
+import com.seedfinding.mcbiome.layer.IntBiomeLayer;
 import com.seedfinding.mcbiome.source.OverworldBiomeSource;
 import com.seedfinding.mccore.rand.ChunkRand;
 import com.seedfinding.mccore.util.pos.CPos;
@@ -18,11 +19,31 @@ public class OverworldBiomeFilter {
     private final ChunkRand chunkRand;
     private final long worldSeed;
     private final OverworldBiomeSource overworldBiomeSource;
+    private final IntBiomeLayer biomeLayer9;
+    private final IntBiomeLayer biomeLayer11;
+    private final IntBiomeLayer biomeLayer16;
+    private final IntBiomeLayer biomeLayer19;
+    private final IntBiomeLayer biomeLayer26;
+    private final ArrayList<CPos> mushroomPositions;
+    private final ArrayList<CPos> badlandsPositions;
+    private final ArrayList<CPos> junglePositions;
+    private final ArrayList<CPos> megaTaigaPositions;
+    private final ArrayList<CPos> snowyPositions;
     public OverworldBiomeFilter(long worldSeed, long structureSeed, ChunkRand chunkRand) {
         this.structureSeed = structureSeed;
         this.chunkRand = chunkRand;
         this.worldSeed = worldSeed;
         this.overworldBiomeSource = new OverworldBiomeSource(Config.VERSION, worldSeed);
+        this.biomeLayer9 = overworldBiomeSource.getLayer(9);
+        this.biomeLayer11 = overworldBiomeSource.getLayer(11);
+        this.biomeLayer16 = overworldBiomeSource.getLayer(16);
+        this.biomeLayer19 = overworldBiomeSource.getLayer(19);
+        this.biomeLayer26 = overworldBiomeSource.getLayer(26);
+        this.mushroomPositions = new ArrayList<>();
+        this.badlandsPositions = new ArrayList<>();
+        this.junglePositions = new ArrayList<>();
+        this.megaTaigaPositions = new ArrayList<>();
+        this.snowyPositions = new ArrayList<>();
     }
 
     public boolean hasMidgame() {
@@ -30,7 +51,7 @@ public class OverworldBiomeFilter {
     }
 
     public boolean filterBiomes() {
-        return hasJungleBiomes();
+        return hasBadlandsBiomes();
     }
 
     private boolean hasVillage() {
@@ -143,7 +164,7 @@ public class OverworldBiomeFilter {
             }
         }
 
-        // need at least 3 special tiles for mesa, jungle, mega taiga
+        // need at least 3 special tiles for badlands, jungle, mega taiga
         if (specialPositions.size() < 3) {
             return false;
         }
@@ -167,36 +188,39 @@ public class OverworldBiomeFilter {
             return false;
         }
 
-        boolean mesa = false;
+        boolean badlands = false;
         boolean jungle = false;
         boolean megaTaiga = false;
         for (CPos pos: specialPositions) {
-            if (overworldBiomeSource.getLayer(9).sample(pos.getX(), 0, pos.getZ()) != 0) {
-                switch (overworldBiomeSource.getLayer(11).sample(pos.getX(), 0, pos.getZ())) {
+            if (biomeLayer9.sample(pos.getX(), 0, pos.getZ()) != 0) {
+                switch (biomeLayer11.sample(pos.getX(), 0, pos.getZ())) {
                     case 1: {
-                        mesa = true;
+                        badlands = true;
+                        badlandsPositions.add(pos);
                         break;
                     }
                     case 2: {
                         jungle = true;
+                        junglePositions.add(pos);
                         break;
                     }
                     case 3: {
                         megaTaiga = true;
+                        megaTaigaPositions.add(pos);
                         break;
                     }
                 }
             }
         }
 
-        if (!mesa || !jungle || !megaTaiga) {
+        if (!badlands || !jungle || !megaTaiga) {
             return false;
         }
 
         boolean freezing = false;
         for (int x = -3; x <= 2; x++) {
             for (int z = -3; z <= 2; z++) {
-                if (overworldBiomeSource.getLayer(11).sample(x, 0, z) == 4) {
+                if (biomeLayer11.sample(x, 0, z) == 4) {
                     freezing = true;
                 }
             }
@@ -207,7 +231,7 @@ public class OverworldBiomeFilter {
         }
 
         for (CPos pos: mushroomPositions) {
-            if (overworldBiomeSource.getLayer(16).sample(pos.getX(), 0, pos.getZ()) == 14) {
+            if (biomeLayer16.sample(pos.getX(), 0, pos.getZ()) == 14) {
                 return true;
             }
         }
@@ -223,12 +247,12 @@ public class OverworldBiomeFilter {
         }
 
         // id 0 is ocean
-        if (overworldBiomeSource.getLayer(9).sample(0, 0, 0) == 0) {
+        if (biomeLayer9.sample(0, 0, 0) == 0) {
             return false;
         }
 
         // id 2 is desert -> jungle
-        if (overworldBiomeSource.getLayer(11).sample(0, 0, 0) != 2) {
+        if (biomeLayer11.sample(0, 0, 0) != 2) {
             return false;
         }
 
@@ -241,10 +265,10 @@ public class OverworldBiomeFilter {
         */
         for (int x = 0; x < 4; x++) {
             for (int z = 0; z < 4; z++) {
-                if (overworldBiomeSource.getLayer(19).sample(x, 0, z) == 168) {
+                if (biomeLayer19.sample(x, 0, z) == 168) {
                     for (int i = 0; i < 4; i++) {
                         for (int j = 0; j < 4; j++) {
-                            if (overworldBiomeSource.getLayer(26).sample(i, 0, j) == 169) {
+                            if (biomeLayer26.sample(i, 0, j) == 169) {
                                 return true;
                             }
                         }
@@ -263,12 +287,12 @@ public class OverworldBiomeFilter {
         }
 
         // id 0 is ocean
-        if (overworldBiomeSource.getLayer(9).sample(0, 0, 0) == 0) {
+        if (biomeLayer9.sample(0, 0, 0) == 0) {
             return false;
         }
 
         // id 3 is mountains -> mega taiga
-        if (overworldBiomeSource.getLayer(11).sample(0, 0, 0) != 3) {
+        if (biomeLayer11.sample(0, 0, 0) != 3) {
             return false;
         }
 
@@ -281,10 +305,10 @@ public class OverworldBiomeFilter {
         */
         for (int x = 0; x < 4; x++) {
             for (int z = 0; z < 4; z++) {
-                if (overworldBiomeSource.getLayer(19).sample(x, 0, z) == 32) {
+                if (biomeLayer19.sample(x, 0, z) == 32) {
                     for (int i = 0; i < 4; i++) {
                         for (int j = 0; j < 4; j++) {
-                            if (overworldBiomeSource.getLayer(26).sample(i, 0, j) == 33) {
+                            if (biomeLayer26.sample(i, 0, j) == 33) {
                                 return true;
                             }
                         }
@@ -293,5 +317,48 @@ public class OverworldBiomeFilter {
             }
         }
         return false;
+    }
+
+    private boolean hasBadlandsBiomes() {
+        long specialLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 3);
+        long specialLocalSeed = BiomeLayer.getLocalSeed(specialLayerSeed, 0, 0);
+        if (Math.floorMod(specialLocalSeed >> 24, 13) != 0) {
+            return false;
+        }
+
+        // id 0 is ocean
+        if (biomeLayer9.sample(0, 0, 0) == 0) {
+            return false;
+        }
+
+        // id 1 is plains -> badlands
+        if (biomeLayer11.sample(0, 0, 0) != 1) {
+            return false;
+        }
+
+        /*
+        id 38 is wooded_badlands_plateau
+        checking at 256:1
+
+        id 39 is badlands_plateau
+        checking at 256:1
+        */
+        boolean woodedBadlandsPlateau = false;
+        boolean badlandsPlateau = false;
+        for (int x = 0; x < 4; x++) {
+            for (int z = 0; z < 4; z++) {
+                switch (biomeLayer19.sample(x, 0, z)) {
+                    case 38: {
+                        woodedBadlandsPlateau = true;
+                        break;
+                    }
+                    case 39: {
+                        badlandsPlateau = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return badlandsPlateau && woodedBadlandsPlateau;
     }
 }
