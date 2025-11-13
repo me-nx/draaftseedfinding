@@ -25,8 +25,12 @@ public class OverworldBiomeFilter {
         this.overworldBiomeSource = new OverworldBiomeSource(Config.VERSION, worldSeed);
     }
 
+    public boolean hasMidgame() {
+        return hasVillage() && hasTemple() && hasMonument() && hasOutpost() && hasMidgameTemples(5);
+    }
+
     public boolean filterBiomes() {
-        return hasVillage() && hasTemple() && hasMonument() && hasOutpost() && hasMidgameTemples(5) && hasBiomes();
+        return hasJungleBiomes();
     }
 
     private boolean hasVillage() {
@@ -122,7 +126,7 @@ public class OverworldBiomeFilter {
         snowy_taiga - layer 18 256:1
         snowy_taiga_hills - layer 26 64:1
         frozen_river - layer 41 4:1
-         */
+        */
 
         ArrayList<CPos> specialPositions = new ArrayList<>();
         long specialLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 3);
@@ -160,25 +164,6 @@ public class OverworldBiomeFilter {
         }
 
         if (mushroomPositions.isEmpty()) {
-            return false;
-        }
-
-        ArrayList<CPos> specialPositions = new ArrayList<>();
-        long specialLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 3);
-
-        for (int x = -3; x <= 2; x++) {
-            for (int z = -3; z <=2; z++) {
-                long specialLocalSeed = BiomeLayer.getLocalSeed(specialLayerSeed, x, z);
-
-                // 1 in 13 for a 1024x1024 tile to be special
-                if (Math.floorMod(specialLocalSeed >> 24, 13) == 0) {
-                    specialPositions.add(new CPos(x, z));
-                }
-            }
-        }
-
-        // need at least 3 special tiles for mesa, jungle, mega taiga
-        if (specialPositions.size() < 3) {
             return false;
         }
 
@@ -227,6 +212,46 @@ public class OverworldBiomeFilter {
             }
         }
 
+        return false;
+    }
+
+    private boolean hasJungleBiomes() {
+        long specialLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 3);
+        long specialLocalSeed = BiomeLayer.getLocalSeed(specialLayerSeed, 0, 0);
+        if (Math.floorMod(specialLocalSeed >> 24, 13) != 0) {
+            return false;
+        }
+
+        // id 0 is ocean
+        if (overworldBiomeSource.getLayer(9).sample(0, 0, 0) == 0) {
+            return false;
+        }
+
+        // id 2 is desert -> jungle
+        if (overworldBiomeSource.getLayer(11).sample(0, 0, 0) != 2) {
+            return false;
+        }
+
+        /*
+        id 168 is bamboo_jungle
+        checking at 256:1
+
+        id 169 is bamboo_jungle_hills
+        checking at 64:1
+        */
+        for (int x = 0; x < 4; x++) {
+            for (int z = 0; z < 4; z++) {
+                if (overworldBiomeSource.getLayer(19).sample(x, 0, z) == 168) {
+                    for (int i = 0; i < 4; i++) {
+                        for (int j = 0; j < 4; j++) {
+                            if (overworldBiomeSource.getLayer(26).sample(i, 0, j) == 169) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         return false;
     }
 }
