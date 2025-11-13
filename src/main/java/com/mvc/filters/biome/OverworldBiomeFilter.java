@@ -2,6 +2,7 @@ package com.mvc.filters.biome;
 
 import com.mvc.Config;
 
+import com.seedfinding.mcbiome.layer.BiomeLayer;
 import com.seedfinding.mcbiome.source.OverworldBiomeSource;
 import com.seedfinding.mccore.rand.ChunkRand;
 import com.seedfinding.mccore.util.pos.CPos;
@@ -10,18 +11,22 @@ import com.seedfinding.mcfeature.structure.Monument;
 import com.seedfinding.mcfeature.structure.PillagerOutpost;
 import com.seedfinding.mcfeature.structure.Village;
 
+import java.util.ArrayList;
+
 public class OverworldBiomeFilter {
     private final long structureSeed;
     private final ChunkRand chunkRand;
+    private final long worldSeed;
     private final OverworldBiomeSource overworldBiomeSource;
     public OverworldBiomeFilter(long worldSeed, long structureSeed, ChunkRand chunkRand) {
         this.structureSeed = structureSeed;
         this.chunkRand = chunkRand;
+        this.worldSeed = worldSeed;
         this.overworldBiomeSource = new OverworldBiomeSource(Config.VERSION, worldSeed);
     }
 
     public boolean filterBiomes() {
-        return hasVillage() && hasTemple() && hasMonument() && hasOutpost() && hasMidgameTemples(5);
+        return hasVillage() && hasTemple() && hasMonument() && hasOutpost() && hasMidgameTemples(5) && hasBiomes();
     }
 
     private boolean hasVillage() {
@@ -87,6 +92,94 @@ public class OverworldBiomeFilter {
                 if (poPos != null && po.canSpawn(poPos.getX(), poPos.getZ(), overworldBiomeSource)) {
                     return true;
                 }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasBiomes() {
+        //TODO: add checks for individual biomes
+
+        ArrayList<CPos> mushroomPositions = new ArrayList<>();
+        long mushroomLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 5);
+
+        for (int x = -12; x <= 11; x++) {
+            for (int z = -12; z <= 11; z++) {
+                long mushroomLocalSeed = BiomeLayer.getLocalSeed(mushroomLayerSeed, x, z);
+
+                // 1 in 100 for a 256x256 tile to be mushroom
+                if (Math.floorMod(mushroomLocalSeed >> 24, 100) == 0) {
+                    mushroomPositions.add(new CPos(x, z));
+                }
+            }
+        }
+
+        if (mushroomPositions.isEmpty()) {
+            return false;
+        }
+
+        ArrayList<CPos> specialPositions = new ArrayList<>();
+        long specialLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 3);
+
+        for (int x = -3; x <= 2; x++) {
+            for (int z = -3; z <=2; z++) {
+                long specialLocalSeed = BiomeLayer.getLocalSeed(specialLayerSeed, x, z);
+
+                // 1 in 13 for a 1024x1024 tile to be special
+                if (Math.floorMod(specialLocalSeed >> 24, 13) == 0) {
+                    specialPositions.add(new CPos(x, z));
+                }
+            }
+        }
+
+        // need at least 3 special tiles for mesa, jungle, mega taiga
+        if (specialPositions.size() < 3) {
+            return false;
+        }
+
+        boolean mesa = false;
+        boolean jungle = false;
+        boolean megaTaiga = false;
+        for (CPos pos: specialPositions) {
+            if (overworldBiomeSource.getLayer(9).sample(pos.getX(), 0, pos.getZ()) != 0) {
+                switch (overworldBiomeSource.getLayer(11).sample(pos.getX(), 0, pos.getZ())) {
+                    case 1: {
+                        mesa = true;
+                        break;
+                    }
+                    case 2: {
+                        jungle = true;
+                        break;
+                    }
+                    case 3: {
+                        megaTaiga = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!mesa || !jungle || !megaTaiga) {
+            return false;
+        }
+
+        boolean freezing = false;
+        for (int x = -3; x <= 2; x++) {
+            for (int z = -3; z <= 2; z++) {
+                if (overworldBiomeSource.getLayer(11).sample(x, 0, z) == 4) {
+                    freezing = true;
+                }
+            }
+        }
+
+        if (!freezing) {
+            return false;
+        }
+
+        for (CPos pos: mushroomPositions) {
+            if (overworldBiomeSource.getLayer(16).sample(pos.getX(), 0, pos.getZ()) == 14) {
+                return true;
             }
         }
 
