@@ -254,4 +254,44 @@ public class OverworldBiomeFilter {
         }
         return false;
     }
+
+    private boolean hasMegaTaigaBiomes() {
+        long specialLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 3);
+        long specialLocalSeed = BiomeLayer.getLocalSeed(specialLayerSeed, 0, 0);
+        if (Math.floorMod(specialLocalSeed >> 24, 13) != 0) {
+            return false;
+        }
+
+        // id 0 is ocean
+        if (overworldBiomeSource.getLayer(9).sample(0, 0, 0) == 0) {
+            return false;
+        }
+
+        // id 3 is mountains -> mega taiga
+        if (overworldBiomeSource.getLayer(11).sample(0, 0, 0) != 3) {
+            return false;
+        }
+
+        /*
+        id 32 is giant_tree_taiga
+        checking at 256:1
+
+        id 33 is giant_tree_taiga_hills
+        checking at 64:1
+        */
+        for (int x = 0; x < 4; x++) {
+            for (int z = 0; z < 4; z++) {
+                if (overworldBiomeSource.getLayer(19).sample(x, 0, z) == 32) {
+                    for (int i = 0; i < 4; i++) {
+                        for (int j = 0; j < 4; j++) {
+                            if (overworldBiomeSource.getLayer(26).sample(i, 0, j) == 33) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }
