@@ -99,11 +99,55 @@ public class OverworldBiomeFilter {
     }
 
     private boolean hasBiomes() {
-        //TODO: add checks for individual biomes
+        /*
+        TODO: add checks for individual biomes
+        mushroom_fields - layer 16 256:1
+        mushroom_field_shore - layer 31 16:1
+
+        jungle - layer 18 256:1
+        jungle_hills - layer 26 64:1
+        jungle_edge - layer 31 16:1
+        bamboo_jungle - layer 19 256:1
+        bamboo_jungle_hills - layer 26 64:1
+
+        badlands - layer 22 64:1
+        badlands_plateau - layer 18 256:1
+        wooded_badlands_plateau - layer 18 256:1
+
+        giant_tree_taiga - layer 18 256:1
+        giant_tree_taiga_hills - layer 26 64:1
+
+        snowy_tundra - layer 18 256:1
+        snowy_mountains - layer 26 64:1
+        snowy_taiga - layer 18 256:1
+        snowy_taiga_hills - layer 26 64:1
+        frozen_river - layer 41 4:1
+         */
+
+        ArrayList<CPos> specialPositions = new ArrayList<>();
+        long specialLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 3);
+
+        // 53% to have 3 special tiles
+        for (int x = -3; x <= 2; x++) {
+            for (int z = -3; z <= 2; z++) {
+                long specialLocalSeed = BiomeLayer.getLocalSeed(specialLayerSeed, x, z);
+
+                // 1 in 13 for a 1024x1024 tile to be special
+                if (Math.floorMod(specialLocalSeed >> 24, 13) == 0) {
+                    specialPositions.add(new CPos(x, z));
+                }
+            }
+        }
+
+        // need at least 3 special tiles for mesa, jungle, mega taiga
+        if (specialPositions.size() < 3) {
+            return false;
+        }
 
         ArrayList<CPos> mushroomPositions = new ArrayList<>();
         long mushroomLayerSeed = BiomeLayer.getLayerSeed(worldSeed, 5);
 
+        // 76% to have 1 mushroom tile
         for (int x = -12; x <= 11; x++) {
             for (int z = -12; z <= 11; z++) {
                 long mushroomLocalSeed = BiomeLayer.getLocalSeed(mushroomLayerSeed, x, z);
