@@ -48,19 +48,16 @@ public class OverworldBiomeFilter {
         this.snowyPositions = new ArrayList<>();
     }
 
-    public boolean hasMidgame() {
+    public boolean filterOverworld() {
+        return hasMidgame() && filterBiomes();
+    }
+
+    private boolean hasMidgame() {
         return hasVillage() && hasTemple() && hasMonument() && hasOutpost() && hasMidgameTemples(5);
     }
 
-    public boolean filterBiomes() {
-        /*
-        mushroom 2m 23s 30 seeds 10,276 matches
-        jungle 1m 37s 18 seeds 10,129 matches ~ BUGGED SOMETIMES???
-        mega taiga 38s 8 seeds 10,909 ~ BUGGED SOMETIMES???
-        badlands ~ SLOW AS FUCK
-        snowy 53s 10 seeds 11,547 matches
-         */
-        return hasBiomeTiles() && hasSnowyBiomes();
+    private boolean filterBiomes() {
+        return hasBiomeTiles() && hasMushroomBiomes() && hasJungleBiomes() && hasMegaTaigaBiomes() && hasSnowyBiomes() && hasBadlandsBiomes();
     }
 
     private boolean hasVillage() {

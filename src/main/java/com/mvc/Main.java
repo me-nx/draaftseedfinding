@@ -113,7 +113,7 @@ public class Main {
         ChunkRand chunkRand = new ChunkRand(structureSeed);
         OverworldBiomeFilter overworldBiomeFilter = new OverworldBiomeFilter(worldSeed, structureSeed, chunkRand);
 
-        return overworldBiomeFilter.filterBiomes();
+        return overworldBiomeFilter.filterOverworld();
     }
 
     private static void initialize() throws IOException {
