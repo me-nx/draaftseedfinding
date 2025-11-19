@@ -7,6 +7,7 @@ import com.seedfinding.mcbiome.source.NetherBiomeSource;
 import com.seedfinding.mccore.block.Block;
 import com.seedfinding.mccore.block.Blocks;
 import com.seedfinding.mccore.rand.ChunkRand;
+import com.seedfinding.mccore.util.math.DistanceMetric;
 import com.seedfinding.mccore.util.pos.BPos;
 import com.seedfinding.mccore.util.pos.CPos;
 import com.seedfinding.mcfeature.structure.BastionRemnant;
@@ -18,10 +19,10 @@ import java.util.*;
 public class NetherStructureFilter {
     private final long structureSeed;
     private final ChunkRand chunkRand;
-    private final NetherTerrainGenerator netherTerrainGenerator;
     private CPos bastionPos;
     private CPos fortressPos;
-    private final NetherBiomeSource netherBiomeSource;
+    private NetherBiomeSource netherBiomeSource;
+    private NetherTerrainGenerator netherTerrainGenerator;
 
     private static final int MAX_SEARCH_DEPTH = 250; // Stop after checking 500 chunks
     private static final int HEURISTIC_WEIGHT = 2; // Multiplier to make it greedy-ish (faster, less perfect)
@@ -29,8 +30,6 @@ public class NetherStructureFilter {
     public NetherStructureFilter(long structureSeed, ChunkRand chunkRand) {
         this.structureSeed = structureSeed;
         this.chunkRand = chunkRand;
-        this.netherBiomeSource = new NetherBiomeSource(Config.VERSION, structureSeed);
-        this.netherTerrainGenerator = new NetherTerrainGenerator(netherBiomeSource);
     }
 
     public boolean filterStructures() {
@@ -81,12 +80,17 @@ public class NetherStructureFilter {
 
             if (checks++ > MAX_SEARCH_DEPTH) return false; // Took too long
             if (current.pos.equals(target)) return true; // Reached destination
-            if (closedSet.contains(current.pos)) continue;
+            if (closedSet.contains(current.pos)) continue; // Already been here
+            if (current.pos.distanceTo(target, DistanceMetric.EUCLIDEAN) > Config.BASTION_DISTANCE) { // Went too far from the target
+                closedSet.add(current.pos);
+                continue;
+            }
 
             closedSet.add(current.pos);
 
-            // Check neighbors (North, South, East, West)
-            int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+//            // Check neighbors (North, South, East, West)
+//            int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+            int[][] directions = getDirections(target);
 
             for (int[] dir : directions) {
                 CPos neighborPos = new CPos(current.pos.getX() + dir[0], current.pos.getZ() + dir[1]);
@@ -109,9 +113,42 @@ public class NetherStructureFilter {
         return false; // No path found
     }
 
+    private static int[][] getDirections(CPos target) {
+        if (Math.abs(target.getX()) < Math.abs(target.getZ())) { // Z is major axis
+            if (target.getZ() < 0) {
+                if (target.getX() < 0) {
+                    return new int[][]{{0, -1}, {-1, 0}, {1, 0}, {0, 1}};
+                } else {
+                    return new int[][]{{0, -1}, {1, 0}, {-1, 0}, {0, 1}};
+                }
+            } else {
+                if (target.getX() < 0) {
+                    return new int[][]{{0, 1}, {-1, 0}, {1, 0}, {0, -1}};
+                } else {
+                    return new int[][]{{0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+                }
+            }
+        } else { // X is major axis
+            if (target.getX() < 0) {
+                if (target.getZ() < 0) {
+                    return new int[][]{{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
+                } else {
+                    return new int[][]{{-1, 0}, {0, 1}, {0, -1}, {1, 0}};
+                }
+            } else {
+                if (target.getZ() < 0) {
+                    return new int[][]{{1, 0}, {0, -1}, {0, 1}, {-1, 0}};
+                } else {
+                    return new int[][]{{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
+                }
+            }
+        }
+    }
+
     private boolean isSpaceForPortal() {
         int x = 0;
         int z = 0;
+        netherTerrainGenerator = new NetherTerrainGenerator(netherBiomeSource);
 
         // Iterate from just above the lava ocean (32) to the ceiling (approx 120)
         // We look for a solid block that has air immediately above it.
@@ -206,6 +243,8 @@ public class NetherStructureFilter {
     }
 
     private boolean isSSV() {
+        netherBiomeSource = new NetherBiomeSource(Config.VERSION, structureSeed);
+
         return netherBiomeSource.getBiome(fortressPos.toBlockPos()).equals(Biomes.SOUL_SAND_VALLEY) &&
                 netherBiomeSource.getBiome(fortressPos.add(-4, 0).toBlockPos()).equals(Biomes.SOUL_SAND_VALLEY) &&
                 netherBiomeSource.getBiome(fortressPos.add(4, 0).toBlockPos()).equals(Biomes.SOUL_SAND_VALLEY) &&
@@ -270,41 +309,4 @@ public class NetherStructureFilter {
         }
         return false;
     }
-
-//    Seems hard to get access ti underlying noise function from NetherTerrainGenerator. Maybe we don't need this
-//    public boolean isChunkWalkableFast(CPos chunkPos) {
-//        int centerX = (chunkPos.getX() << 4) + 8;
-//        int centerZ = (chunkPos.getZ() << 4) + 8;
-//
-//        boolean hasFloor = false;
-//
-//        // Scan the vertical column using raw math
-//        for (int y = 32; y < 90; y += 4) {
-//
-//            // 1. The Raw Calculation
-//            // This is the heavy optimization. No "Block" objects created.
-//            double density = netherTerrainGenerator.sa(centerX, y, centerZ);
-//
-//            // 2. Interpret the Math
-//            boolean isSolid = density > 0;
-//
-//            // 3. Logic (same as before, but using density)
-//            if (!isSolid) {
-//                // It is "Empty" space.
-//                // Check specific Y-level to distinguish Air vs Lava
-//                if (y >= LAVA_LEVEL) {
-//                    // It is Air
-//                    if (hasFloor) return true; // Found Air + Floor below = Walkable!
-//                } else {
-//                    // It is Lava (Empty space below sea level)
-//                    hasFloor = false; // Cannot walk on lava
-//                }
-//            } else {
-//                // It is Wall/Ground
-//                hasFloor = true;
-//            }
-//        }
-//        return false;
-//    }
-//}
 }
