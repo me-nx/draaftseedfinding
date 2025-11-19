@@ -107,10 +107,7 @@ public class NetherStructureFilter {
             int air = 0;
             boolean lastBlockAir = false;
 
-            for (int b = 0; b < column.length; b++) {
-                if (b < 40 || b > 100) {
-                    continue;
-                }
+            for (int b = 40; b < 100; b++) {
                 if (!lastBlockAir && column[b].equals(Blocks.AIR)) {
                     lastBlockAir = true;
                     continue;
@@ -119,6 +116,10 @@ public class NetherStructureFilter {
                     if (++air > 5) {
                         return true;
                     }
+                }
+                if (!column[b].equals(Blocks.AIR)) {
+                    lastBlockAir = false;
+                    air = 0;
                 }
             }
         }
