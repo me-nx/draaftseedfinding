@@ -1,7 +1,5 @@
 package com.mvc.filters.structure;
 
-import Xinyuiii.enumType.BastionType;
-import Xinyuiii.properties.BastionGenerator;
 import com.mvc.Config;
 import com.seedfinding.mcbiome.biome.Biome;
 import com.seedfinding.mcbiome.biome.Biomes;
@@ -38,7 +36,7 @@ public class NetherStructureFilter {
     }
 
     public boolean filterStructures() {
-        return hasBastion() && hasFortress() && !isBadBastion() && isSSV() && isSpaceForPortal() && canPathToBastion(new CPos(0, 0), bastionPos);
+        return hasBastion() && hasFortress() && isSSV() && isSpaceForPortal() && canPathToBastion(new CPos(0, 0), bastionPos);
     }
 
     private boolean hasBastion() {
@@ -70,16 +68,6 @@ public class NetherStructureFilter {
             }
         }
         return false;
-    }
-
-    private boolean isBadBastion() {
-        BastionGenerator bastionGenerator = new BastionGenerator(Config.VERSION);
-        bastionGenerator.generate(structureSeed, bastionPos);
-
-        if (!bastionGenerator.getType().equals(BastionType.STABLES)) {
-            return false;
-        }
-        return (bastionGenerator.getStableInfo()[0] + bastionGenerator.getStableInfo()[1]) == 0;
     }
 
     private boolean canPathToBastion(CPos start, CPos target) {

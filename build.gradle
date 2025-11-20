@@ -19,5 +19,4 @@ dependencies {
     implementation('com.seedfinding:mc_biome:LATEST') { transitive = false }
     implementation('com.seedfinding:mc_terrain:LATEST') { transitive = false }
     implementation('com.seedfinding:mc_feature:LATEST') { transitive = false }
-    implementation('com.github.Xinyuuu7:BastionGenerator:bdd9ba7474')
 }
