@@ -71,7 +71,7 @@ public class NetherStructureFilter {
     }
 
     private boolean canPathToBastion(CPos start, CPos target) {
-        // Pre-check: If Manhattan distance is > 10, it's mathematically impossible to reach in 10 steps.
+        // Pre-check: If Manhattan distance is > 14, it's mathematically impossible to reach in 14 steps.
         if (Math.abs(start.getX() - target.getX()) + Math.abs(start.getZ() - target.getZ()) > MAX_PATH_LENGTH) {
             return false;
         }
@@ -81,7 +81,7 @@ public class NetherStructureFilter {
         // If we reach a chunk in 5 steps, we reject future paths that reach it in 6 steps.
         Map<CPos, Integer> visitedSteps = new HashMap<>();
 
-        openSet.add(new Node(start, 0, getHeuristic(start, target), 0, null));
+        openSet.add(new Node(start, 0, getHeuristic(start, target), 0));
         visitedSteps.put(start, 0);
 
         int checks = 0;
@@ -90,13 +90,7 @@ public class NetherStructureFilter {
             Node current = openSet.poll();
 
             if (checks++ > MAX_SEARCH_DEPTH) return false; // Computation limit
-            if (current.pos.equals(target)) {
-                Node temp = current;
-                while (temp != null) {
-                    temp = temp.parent;
-                }
-                return true;   // Success
-            }
+            if (current.pos.equals(target)) return true; // Success
 
             if (current.pos.distanceTo(target, DistanceMetric.EUCLIDEAN) > Config.BASTION_DISTANCE) { // Went too far from the target
                 visitedSteps.put(current.pos, current.steps);
@@ -115,7 +109,7 @@ public class NetherStructureFilter {
                 CPos neighborPos = new CPos(current.pos.getX() + dir[0], current.pos.getZ() + dir[1]);
                 int newSteps = current.steps + 1;
 
-                // 1. HARD LIMIT: Max 10 Chunks
+                // 1. HARD LIMIT: Max 14 Chunks
                 if (newSteps > MAX_PATH_LENGTH) continue;
 
                 // 2. Loop/Redundancy Check
@@ -132,7 +126,7 @@ public class NetherStructureFilter {
                 double newHCost = getHeuristic(neighborPos, target);
 
                 visitedSteps.put(neighborPos, newSteps);
-                openSet.add(new Node(neighborPos, newGCost, newHCost, newSteps, current));
+                openSet.add(new Node(neighborPos, newGCost, newHCost, newSteps));
             }
         }
         return false;
@@ -189,15 +183,13 @@ public class NetherStructureFilter {
         double hCost;
         double fCost;
         int steps;
-        Node parent;
 
-        public Node(CPos pos, double gCost, double hCost, int steps, Node parent) {
+        public Node(CPos pos, double gCost, double hCost, int steps) {
             this.pos = pos;
             this.gCost = gCost;
             this.hCost = hCost;
             this.fCost = gCost + hCost;
             this.steps = steps;
-            this.parent = parent;
         }
 
         @Override
