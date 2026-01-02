@@ -50,7 +50,7 @@ public class EndStructureFilter {
         EndCity city = new EndCity(Config.VERSION);
         CPos cityPos = city.getInRegion(structureSeed, gatewayRegion.getX(), gatewayRegion.getZ(), chunkRand);
 
-        if (!(cityPos.distanceTo(gatewayPos.toChunkPos(), DistanceMetric.EUCLIDEAN) <= Config.END_CITY_DISTANCE)) {
+        if (!(cityPos.distanceTo(gatewayPos.toChunkPos(), DistanceMetric.EUCLIDEAN) <= Config.END_CITY_DISTANCE) || !(cityPos.toBlockPos().getMagnitude() > 1024.0)) {
             return false;
         }
 
@@ -62,16 +62,24 @@ public class EndStructureFilter {
             return false;
         }
 
+        int chests = 0;
+
         for (Pair<Generator.ILootType, BPos> e : ecg.getChestsPos()) {
-            if (e.getFirst().equals(EndCityGenerator.LootType.SHIP_ELYTRA)) {
-                if (e.getSecond().toChunkPos().distanceTo(cityPos, DistanceMetric.EUCLIDEAN) > 9) {
-                    System.out.println(structureSeed + ": cut off ship found at /execute in minecraft:the_end run tp @s " + e.getSecond().getX() + " ~ " + e.getSecond().getZ());
+            EndCityGenerator.ILootType lootType = e.getFirst();
+            if (lootType.equals(EndCityGenerator.LootType.SHIP_ELYTRA)) {
+                if (e.getSecond().toChunkPos().distanceTo(cityPos, DistanceMetric.CHEBYSHEV) > 8) {
+//                    System.out.println(structureSeed + ": cut off ship found at /execute in minecraft:the_end run tp @s " + e.getSecond().getX() + " ~ " + e.getSecond().getZ());
                     return false;
                 }
+            } else if (
+                        lootType.equals(EndCityGenerator.LootType.FAT_TOWER_TOP_CHEST_1) ||
+                        lootType.equals(EndCityGenerator.LootType.FAT_TOWER_TOP_CHEST_2) ||
+                        lootType.equals(EndCityGenerator.LootType.THIRD_FLOOR_CHEST)) {
+                chests++;
             }
         }
 
         // ship room + 4 other chests
-        return ecg.hasShip() && ecg.getLootPos().size() >= 6;
+        return ecg.hasShip() && chests >= 4;
     }
 }

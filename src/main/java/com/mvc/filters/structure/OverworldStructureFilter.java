@@ -1,12 +1,10 @@
 package com.mvc.filters.structure;
 
 import com.mvc.Config;
+import com.seedfinding.mcbiome.source.OverworldBiomeSource;
 import com.seedfinding.mccore.rand.ChunkRand;
 import com.seedfinding.mccore.util.pos.CPos;
-import com.seedfinding.mcfeature.structure.DesertPyramid;
-import com.seedfinding.mcfeature.structure.Monument;
-import com.seedfinding.mcfeature.structure.PillagerOutpost;
-import com.seedfinding.mcfeature.structure.Village;
+import com.seedfinding.mcfeature.structure.*;
 
 public class OverworldStructureFilter {
     private final long structureSeed;
@@ -18,7 +16,7 @@ public class OverworldStructureFilter {
     }
 
     public boolean filterStructures() {
-        return hasOutpost() && hasVillage() && hasTemple() && hasMonument();
+        return hasOutpost() && hasVillage() && hasTemple();
     }
 
     private boolean hasVillage() {
@@ -35,14 +33,14 @@ public class OverworldStructureFilter {
         return templePos.getMagnitude() <= Config.TEMPLE_DISTANCE;
     }
 
-    private boolean hasMonument() {
-        Monument mm = new Monument(Config.VERSION);
+    private boolean hasOutpost() {
+        PillagerOutpost po = new PillagerOutpost(Config.VERSION);
 
         for (int x = -2; x <= 1; x++) {
-            for (int z = -2; z <= 2; z++) {
-                CPos mmPos = mm.getInRegion(structureSeed, x, z, chunkRand);
+            for (int z = -2; z <= 1; z++) {
+                CPos poPos = po.getInRegion(structureSeed, x, z, chunkRand);
 
-                if (mmPos.getMagnitude() <= Config.MONUMENT_DISTANCE) {
+                if (poPos != null) {
                     return true;
                 }
             }
@@ -51,19 +49,8 @@ public class OverworldStructureFilter {
         return false;
     }
 
-    private boolean hasOutpost() {
-        PillagerOutpost po = new PillagerOutpost(Config.VERSION);
-
-        for (int x = -2; x <= 1; x++) {
-            for (int z = -2; z <= 2; z++) {
-                CPos poPos = po.getInRegion(structureSeed, x, z, chunkRand);
-
-                if (poPos != null && poPos.getMagnitude() <= Config.OUTPOST_DISTANCE) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+    public CPos[] getStrongholds() {
+        Stronghold stronghold = new Stronghold(Config.VERSION);
+        return stronghold.getStarts(new OverworldBiomeSource(Config.VERSION, structureSeed), 3, chunkRand);
     }
 }

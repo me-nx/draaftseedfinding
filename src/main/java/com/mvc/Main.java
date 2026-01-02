@@ -47,7 +47,7 @@ public class Main {
 
     private static void filterIncremental(long start) throws IOException {
         while (seedMatches < Config.SEED_MATCHES) {
-            checkSeed(start & ((1L << 48) - 1));
+            checkSeed(start);
             start++;
         }
     }
@@ -60,17 +60,37 @@ public class Main {
         Random random = new Random();
 
         while (seedMatches < Config.SEED_MATCHES) {
-            checkSeed(random.nextLong() & ((1L << 48) - 1));
+            checkSeed(random.nextLong());
         }
     }
 
+//    private static void getStrongholds(long seed) throws IOException {
+//        ChunkRand chunkRand = new ChunkRand(seed);
+//        OverworldStructureFilter overworldStructureFilter = new OverworldStructureFilter(seed, chunkRand);
+//        CPos[] strongholds = overworldStructureFilter.getStrongholds();
+//        output.write(seed + " " + Arrays.toString(strongholds) + "\n");
+//    }
+
+//    private static void getNetherStructures(long seed) throws IOException {
+//        ChunkRand chunkRand = new ChunkRand();
+//        NetherStructureFilter netherStructureFilter = new NetherStructureFilter(seed, chunkRand);
+//        Pair<Boolean, ArrayList<CPos>> nethers = netherStructureFilter.filterStructures();
+//        if (nethers.getFirst()) {
+//            output.write(seed + " " + nethers.getSecond() + "\n");
+//        }
+//    }
+
     private static void checkSeed(long seed) throws IOException {
-        Long matchedStructureSeed = filterStructureSeed(seed) ? seed : null;
+        long structureSeed = seed & ((1L << 48) - 1);
+        Long matchedStructureSeed = filterStructureSeed(structureSeed) ? structureSeed : null;
 
         if (matchedStructureSeed != null) {
             if (Config.DIMENSION.equals(Dimension.OVERWORLD)) {
                 for (long biomeSeed = 0; biomeSeed < (1L << 16); biomeSeed++) {
                     long worldSeed = (biomeSeed << 48) | matchedStructureSeed;
+                    if (worldSeed != seed) {
+                        continue;
+                    }
                     Pair<Boolean, ArrayList<BPos>> filteredWorldSeed = filterWorldSeed(worldSeed, matchedStructureSeed);
                     Long matchedWorldSeed = filteredWorldSeed.getFirst() ? worldSeed : null;
 
