@@ -13,6 +13,7 @@ import com.seedfinding.mcfeature.structure.PillagerOutpost;
 import com.seedfinding.mcfeature.structure.Village;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class OverworldBiomeFilter {
     private final long structureSeed;
@@ -28,10 +29,7 @@ public class OverworldBiomeFilter {
         if (!hasMidgame()) {
             return new Pair<>(false, null);
         }
-        if (fullScaleSearch(3, 64, true)) {
-            return new Pair<>(true, null);
-        }
-        return new Pair<>(false, null);
+        return fullScaleSearch(3, 64, true, true);
     }
 
     private boolean hasMidgame() {
@@ -107,10 +105,11 @@ public class OverworldBiomeFilter {
         return false;
     }
 
-    private boolean fullScaleSearch(int radius, int resolution, boolean checkerboard) {
+    private Pair<Boolean, ArrayList<BPos>> fullScaleSearch(int radius, int resolution, boolean checkerboard, boolean annotations) {
         if (((resolution & (resolution - 1)) != 0) || resolution > 256 || resolution < 4) {
             throw new RuntimeException("Please use a resolution of 256, 128, 64, 32, 16, 8, 4");
         }
+        ArrayList<BPos> positions = new ArrayList<>(Arrays.asList(null, null, null, null, null)); // mushroom, jungle, mega taiga, snowy, badlands
         IntBiomeLayer layer;
         switch (resolution) {
             case 4: {
@@ -205,6 +204,9 @@ public class OverworldBiomeFilter {
                     }
                     case 14: {
                         mushroomFields = true;
+                        if (annotations) {
+                            positions.set(0, new BPos(x * resolution, 0, z * resolution));
+                        }
                         break;
                     }
                     case 15: {
@@ -233,6 +235,9 @@ public class OverworldBiomeFilter {
                     }
                     case 31: {
                         snowyTaigaHills = true;
+                        if (annotations) {
+                            positions.set(3, new BPos(x * resolution, 0, z * resolution));
+                        }
                         break;
                     }
                     case 32: {
@@ -241,6 +246,9 @@ public class OverworldBiomeFilter {
                     }
                     case 33: {
                         megaTaigaHills = true;
+                        if (annotations) {
+                            positions.set(2, new BPos(x * resolution, 0, z * resolution));
+                        }
                         break;
                     }
                     case 37: {
@@ -253,6 +261,9 @@ public class OverworldBiomeFilter {
                     }
                     case 39: {
                         badlandsPlateau = true;
+                        if (annotations) {
+                            positions.set(4, new BPos(x * resolution, 0, z * resolution));
+                        }
                         break;
                     }
                     case 168: {
@@ -261,6 +272,9 @@ public class OverworldBiomeFilter {
                     }
                     case 169: {
                         bambooJungleHills = true;
+                        if (annotations) {
+                            positions.set(1, new BPos(x * resolution, 0, z * resolution));
+                        }
                         break;
                     }
                 }
@@ -274,7 +288,7 @@ public class OverworldBiomeFilter {
                 megaTaiga && megaTaigaHills &&
                 badlands && woodedBadlandsPlateau && badlandsPlateau
         ) {
-            return true;
+            return new Pair<>(true, positions);
         } else if ((resolution == 8 || resolution == 16) &&
                 snowyTundra && snowyMountains && snowyBeach && snowyTaiga && snowyTaigaHills &&
                 mushroomFields && mushroomFieldShore &&
@@ -282,7 +296,7 @@ public class OverworldBiomeFilter {
                 megaTaiga && megaTaigaHills &&
                 badlands && woodedBadlandsPlateau && badlandsPlateau
         ) {
-            return true;
+            return new Pair<>(true, positions);
         } else if ((resolution == 32 || resolution == 64) &&
                 snowyTundra && snowyMountains && snowyTaiga && snowyTaigaHills &&
                 mushroomFields &&
@@ -290,12 +304,16 @@ public class OverworldBiomeFilter {
                 megaTaiga && megaTaigaHills &&
                 badlands && woodedBadlandsPlateau && badlandsPlateau
         ) {
-            return true;
-        } else return (resolution == 128 || resolution == 256) &&
+            return new Pair<>(true, positions);
+        } else if ((resolution == 128 || resolution == 256) &&
                     snowyTundra && snowyTaiga &&
                     mushroomFields &&
                     jungle && bambooJungle &&
                     megaTaiga &&
-                    woodedBadlandsPlateau && badlandsPlateau;
+                    woodedBadlandsPlateau && badlandsPlateau) {
+            return new Pair<>(true, positions);
+        } else {
+            return new Pair<>(false, positions);
+        }
     }
 }

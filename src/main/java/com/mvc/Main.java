@@ -31,7 +31,7 @@ public class Main {
         } else if (Config.FILTER.equals(Config.FILTER_TYPE.RANDOM)) {
             filterRandom();
         } else {
-            throw new RuntimeException("Define filter type as FILE or INCREMENTAL in com.mvc.Config");
+            throw new RuntimeException("Define filter type as FILE, INCREMENTAL, or RANDOM in com.mvc.Config");
         }
 
         finish();
