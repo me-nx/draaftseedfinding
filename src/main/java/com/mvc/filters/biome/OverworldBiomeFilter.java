@@ -3,6 +3,7 @@ package com.mvc.filters.biome;
 import com.mvc.Config;
 import com.seedfinding.mcbiome.layer.IntBiomeLayer;
 import com.seedfinding.mcbiome.source.OverworldBiomeSource;
+import com.seedfinding.mccore.block.Blocks;
 import com.seedfinding.mccore.rand.ChunkRand;
 import com.seedfinding.mccore.util.data.Pair;
 import com.seedfinding.mccore.util.pos.BPos;
@@ -11,6 +12,7 @@ import com.seedfinding.mcfeature.structure.DesertPyramid;
 import com.seedfinding.mcfeature.structure.Monument;
 import com.seedfinding.mcfeature.structure.PillagerOutpost;
 import com.seedfinding.mcfeature.structure.Village;
+import com.seedfinding.mcterrain.terrain.OverworldTerrainGenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +49,13 @@ public class OverworldBiomeFilter {
         DesertPyramid temple = new DesertPyramid(Config.VERSION);
         CPos templePos = temple.getInRegion(structureSeed, 0, 0, chunkRand);
 
-        return temple.canSpawn(templePos, overworldBiomeSource);
+        if (!temple.canSpawn(templePos, overworldBiomeSource)) {
+            return false;
+        }
+
+        OverworldTerrainGenerator overworldTerrainGenerator = new OverworldTerrainGenerator(overworldBiomeSource);
+
+        return overworldTerrainGenerator.getBlockAt(templePos.toBlockPos(64).add(10, 10, 10)).get().equals(Blocks.AIR);
     }
 
     private boolean hasMidgameTemples(int minCount) {
